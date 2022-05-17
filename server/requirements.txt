@@ -3,3 +3,5 @@ grequests
 sqlalchemy
 aiosmtplib
 loguru
+flask
+flask_cors

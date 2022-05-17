@@ -79,3 +79,20 @@ def get_emails_by_date(date: str) -> list:
         emails = [email.email_address for email in emails]
     
     return emails
+
+def retrieve_email(email: str) -> bool|None:
+    """
+    If the email exists in the database, return True;
+    Otherwise, add it to the database and return the email_address.
+    """
+    with Session(engine) as session:
+        email_ = session.scalar(select(Email).where(Email.email_address == email))
+        if email_:
+            return True
+        else:
+            email_ = Email(email_address=email)
+        
+        session.add(email_)
+        session.commit()
+        
+    return email
