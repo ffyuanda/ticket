@@ -1,14 +1,13 @@
 .TicketForm {
   text-align: center;
-  width: 30%;
+  width: 70%;
   height: 10%;
   margin: auto;
   margin-bottom: 3%;
 }
 
 .TicketResult {
-  text-align: center;
-  width: 50%;
+  width: 70%;
   height: 200%;
   background-color: lightgray;
   padding: 2%;
@@ -24,22 +23,31 @@
 
 .TicketResult > p[id='email'] {
   display: block;
+  margin: auto;
+  margin-bottom: 3%;
   margin-left: 2%;
-  margin-top: 2%;
-  font-size: 1.5em;
+  margin-top: 0%;
+  font-size: 1.1em;
   font-weight: 600;
+  width: fit-content;
 }
 
 .TicketResult > div[id='dates'] {
   background-color: gray;
-  text-align: center;
-  margin: 2.5%;
-  padding: 2.5%;
+  margin: 1.5%;
+  padding: 1.5%;
   border-radius: 20px;
+  padding-bottom: 5%;
 }
 
 .TicketResult > div[id='dates'] p {
-  display: inline-block;
-  margin: -10em;
-  font-weight: 600;
+  display: block;
+  margin-bottom: 2%;
+  text-align: center;
+  font-weight: 500;
+}
+
+.center {
+  margin: auto;
+  width: 50%;
 }

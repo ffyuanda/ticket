@@ -60,7 +60,7 @@ def register(date, email) -> None:
 
 def get_dates_from_database() -> list:
     """
-    Get a list of dates we need to check from the database.
+    Get all dates we need to check from the database.
     """
     with Session(engine) as session:
         dates = session.scalars(select(Date))
@@ -71,6 +71,7 @@ def get_dates_from_database() -> list:
 def get_emails_by_date(date: str) -> list:
     """
     Get a list of email strings by the date.
+    i.e. emails that subscribed to this date.
     """
 
     with Session(engine) as session:
@@ -79,6 +80,21 @@ def get_emails_by_date(date: str) -> list:
         emails = [email.email_address for email in emails]
     
     return emails
+
+
+def get_dates_by_email(email: str) -> list:
+    """
+    Get a list of date strings by the email.
+    i.e. the dates that a email subscribed to.
+    """
+
+    with Session(engine) as session:
+        email_ = session.scalar(select(Email).where(Email.email_address == email))
+        dates = email_.dates
+        dates = [date.date for date in dates]
+    
+    return dates
+
 
 def retrieve_email(email: str) -> bool|None:
     """
