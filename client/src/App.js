@@ -13,7 +13,29 @@ const validationSchema = yup.object({
     .required('Email is required'),
 });
 
+// eslint-disable-next-line
 const dateSchema = yup.string().matches(/^\d{4}\-(0[1-9]|1[012])\-(0[1-9]|[12][0-9]|3[01])$/);
+
+
+async function fetchDataJSON(url, method, data) {
+  try {
+    const response = await fetch(url, {
+      method: method,
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data),
+    });
+
+    const ret = await response.json();
+    return ret;
+    
+  } catch (error) {
+    console.error(error);
+  }
+}
+
 
 const AddDate = (props) => {
  
@@ -36,18 +58,9 @@ const AddDate = (props) => {
         date: date,
       }
 
-      fetch("http://localhost:5000/register", {
-        method: "POST",
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(data),
-      }).then(res => res.json())
-      .then(res => {
-        if (res['result'] == 'OK')
-          props.setReloadCount(!props.reloadCount)
-      });
+      const res = await fetchDataJSON("http://localhost:5000/register", "POST", data);
+      if (res['result'] === 'OK')
+        props.setReloadCount(!props.reloadCount);
     }
   }
 
@@ -79,11 +92,23 @@ const AddDate = (props) => {
 
 }
 
+
 const DateButton = (props) => {
+
+  const handleClick = async () => {
+
+    const data = {email: props.email, date: props.date};
+
+    const res = await fetchDataJSON("http://localhost:5000/del-date", "DELETE", data);
+    if (res['result'] === 'OK')
+      props.setReloadCount(!props.reloadCount);
+  };
 
   return (
     <Grid item xs={6} sm={3}>
-      <Button variant="contained" size='small'>{props.date}</Button>  
+      <Button variant="contained" size='small' onClick={handleClick}>
+        {props.date}
+      </Button>  
     </Grid>
   );
 }
@@ -100,21 +125,13 @@ const DatesPanel = (props) => {
       let data = {
         email: props.email,
       }
-  
-      fetch("http://localhost:5000/dates", {
-        method: "POST",
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(data),
-      }).then(res => res.json())
-      .then(
-        res => {
-          let _dates = res['dates'];
-          setDates(_dates);
-        }
-      );
+
+      async function _fetchDataJSON() {
+        const res = await fetchDataJSON("http://localhost:5000/dates", "POST", data);
+        if (res['result'] === 'OK')
+          setDates(res['dates']);
+      }
+      _fetchDataJSON();
 
     }
   };
@@ -122,7 +139,13 @@ const DatesPanel = (props) => {
   const getDateButtons = () => {
     let DateButtonArray = [];
     for (let i = 0; i < dates.length; i++) {
-      DateButtonArray.push(<DateButton key={i} date={dates[i]}></DateButton>);
+      DateButtonArray.push(
+      <DateButton 
+      setReloadCount={props.setReloadCount}
+      reloadCount={props.reloadCount}
+      email={props.email} 
+      key={i} date={dates[i]}>
+      </DateButton>);
     }
     setDateButtons(DateButtonArray);
   }
@@ -143,19 +166,27 @@ const DatesPanel = (props) => {
 
 }
 
+
 const TicketResult = (props) => {
   let [reloadCount, setReloadCount] = useState(true);
 
   return(
     <div className='TicketResult'>
+
       <p id='email'>Email: {props.email}</p>
+
       <AddDate email={props.email} 
       reloadCount={reloadCount}
       setReloadCount={setReloadCount}/>
-      <DatesPanel email={props.email} reloadCount={reloadCount}/>
+
+      <DatesPanel email={props.email} 
+      reloadCount={reloadCount}
+      setReloadCount={setReloadCount}/>
+
     </div>
   );
 }
+
 
 const TicketForm = (props) => {
 
@@ -164,21 +195,12 @@ const TicketForm = (props) => {
       email: '',
     },
     validationSchema: validationSchema,
-    onSubmit: (values) => {
+    onSubmit: async (values) => {
       
       let data = {email: values.email};
-
-      fetch("http://localhost:5000/retrieve", {
-        method: "POST",
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(data),
-      }).then(res => {
+      const res = await fetchDataJSON("http://localhost:5000/retrieve", "POST", data);
+      if (res['result'] === 'OK')
         props.setEmail(values.email);
-        console.log("Response:", res)
-      });
 
     },
   });
@@ -199,7 +221,7 @@ const TicketForm = (props) => {
           helperText={formik.touched.email && formik.errors.email}
         />
         <Button color="primary" variant="contained" fullWidth type="submit">
-          Submit
+          Signup / Login
         </Button>
       </form>
 
@@ -212,10 +234,8 @@ const App = () => {
 
   const [email, setEmail] = useState('');
   let ticketResult;
-  if (email && email != '')
+  if (email)
     ticketResult = <TicketResult email={email}/>;
-  else
-    ticketResult = null;
 
   return(
     <div>

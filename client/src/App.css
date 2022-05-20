@@ -8,9 +8,8 @@
 
 .TicketResult {
   width: 70%;
-  height: 200%;
   background-color: lightgray;
-  padding: 2%;
+  padding: 1.7%;
   border-radius: 20px;
   margin: auto;
 }
@@ -35,6 +34,7 @@
 .TicketResult > div[id='dates'] {
   background-color: gray;
   margin: 1.5%;
+  margin-top: 4%;
   padding: 1.5%;
   border-radius: 20px;
   padding-bottom: 5%;

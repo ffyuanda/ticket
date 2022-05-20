@@ -1,3 +1,4 @@
+from loguru import logger
 from sqlalchemy import Column
 from sqlalchemy import ForeignKey
 from sqlalchemy import String
@@ -96,7 +97,7 @@ def get_dates_by_email(email: str) -> list:
     return dates
 
 
-def retrieve_email(email: str) -> bool|None:
+def retrieve_email(email: str) -> bool|str:
     """
     If the email exists in the database, return True;
     Otherwise, add it to the database and return the email_address.
@@ -112,3 +113,15 @@ def retrieve_email(email: str) -> bool|None:
         session.commit()
         
     return email
+
+
+def delete_date_from_email(email: str, date: str):
+    """
+    Delete a date from a email.
+    """
+    with Session(engine) as session:
+        email_ = session.scalar(select(Email).where(Email.email_address == email))
+        date_ = session.scalar(select(Date).where(Date.date == date))
+
+        email_.dates.remove(date_)
+        session.commit()

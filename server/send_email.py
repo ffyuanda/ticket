@@ -25,6 +25,18 @@ async def send_email(email: str, ticket):
         logger.warning(f"recipient refused: {str(e)}")
 
 async def send_emails(tickets: list):
+    """
+    Send emails according to a list of tickets.
+
+    The logic is that, each ticket belongs to a date,
+    then select the emails which have subscribed
+    to this date, and send messages to these emails
+    regarding this ticket's information.
+
+    Repeat this operation for a list of tickets.
+    These emails are sent using asyncio, so hopefully
+    concurrent.
+    """
     aws = []
     for ticket in tickets:
         emails = get_emails_by_date(ticket.date)

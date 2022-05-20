@@ -1,5 +1,5 @@
 from variables import cookies, headers, url, template_payload
-from models import register, get_dates_from_database, get_emails_by_date
+from models import get_dates_from_database, get_emails_by_date
 from send_email import send_emails
 from loguru import logger
 from time import sleep
@@ -8,6 +8,11 @@ import copy
 import grequests
 import requests
 import asyncio
+
+
+# initialize the logger, thanks loguru! <3
+logger.add("ticket.log", format="{time} {file} {level} {message}",\
+               level="DEBUG", rotation="1 week", backtrace=True, diagnose=True)
 
 
 class Ticket:
@@ -40,6 +45,7 @@ Ticket Type: {self.type}\nTicket Remaining Number: {self.num}"
     def expire(self):
         self.renewed = False
 
+
 def make_payload_from_date(date: str) -> dict:
     """
     Make an actual payload from a date, using the template payload.
@@ -58,6 +64,7 @@ def get_AsyncRequest(date: str) -> grequests.AsyncRequest:
     req = grequests.post(url, cookies=cookies, headers=headers, data=data)
     return req
 
+
 @logger.catch
 def get_tickets_responses(dates: list) -> list:
     """
@@ -66,6 +73,7 @@ def get_tickets_responses(dates: list) -> list:
     responses = [get_AsyncRequest(date) for date in dates]
     responses = grequests.map(responses)
     return responses
+
 
 @logger.catch
 def parse_tickets_response(response: requests.Response) -> list:
@@ -81,14 +89,9 @@ def parse_tickets_response(response: requests.Response) -> list:
                 ticket_list.append(ticket)
 
     return ticket_list
+ 
 
-def ticket_is_alive(ticket: Ticket, alive_tickets: list) -> bool:
-    for alive_ticket in alive_tickets:
-        if ticket == alive_ticket:
-            alive_ticket.renewed = True
-            return    
-
-def update_alive_tickets(alive_tickets: list, ticket: Ticket):
+def update_alive_tickets(alive_tickets: list, ticket: Ticket) -> bool:
     """
     Update the alive_tickets list:
     if the ticket is matched with an alive_ticket from alive_tickets,
@@ -119,6 +122,11 @@ def expire_all_tickets(alive_tickets: list):
 def remove_expired_tickets(alive_tickets: list):
     """
     Remove all expired tickets from active_tickets.
+
+    This is mainly used to remove the tickets that are expired (which means in
+    a new round of request fetching, these tickets become unavailable). Once
+    they are removed, when next time they are available again, we will know that
+    the emails should be sent regarding this ticket.
     """
     i = 0
     while i < len(alive_tickets):
@@ -128,22 +136,7 @@ def remove_expired_tickets(alive_tickets: list):
             i += 1
 
 
-def send_email(ticket: Ticket):
-    """
-    Send emails to the users who care about this ticket.
-
-    Only send email when this ticket's remaining number goes
-    from 0 to positive, this rule sounds to be most reasonable and
-    resource-friendly.
-    """
-    emails = get_emails_by_date(ticket.date)
-    print(emails)
-    
-
 def main():
-
-    logger.add("ticket.log", format="{time} {file} {level} {message}",\
-               level="DEBUG", rotation="1 week", backtrace=True, diagnose=True)
 
     logger.info("Program start.")
 
@@ -182,7 +175,7 @@ def main():
                 should_send_email = update_alive_tickets(alive_tickets, ticket)
                 if should_send_email:
                     send_email_tickets.append(ticket)
-                    logger.debug("send_email_tickets appended")
+                    logger.debug(f"append to send_email_tickets: {str(ticket)}")
         
         remove_expired_tickets(alive_tickets)
         logger.debug("removed all expired tickets from alive_tickets")
@@ -202,19 +195,4 @@ def main():
 
 if __name__ == '__main__':
 
-    # example_ticket = Ticket("2022-08-21", "14:00", 2, "TYPE")
-    # alive_tickets = []
-    # alive_tickets.append(example_ticket)
-    # example_ticket1 = Ticket("2022-08-22", "14:00", 2, "TYPE")
-    # update_alive_tickets(alive_tickets, example_ticket1)
-    # remove_expired_tickets(alive_tickets)
-
-    # print(alive_tickets)
-    # for t in alive_tickets:
-    #     print(t)
-
-    # register("2022-08-21", "ffyuanda@gmail.com")
-    # register("2022-08-22", "ffyuanda@gmail.com")
-    # ticket_list = (Ticket("2022-08-21", "14:00", 2, "TYPE"), Ticket("2022-08-22", "14:00", 2, "TYPE"))
-    # asyncio.run(send_emails(ticket_list))
     main()
